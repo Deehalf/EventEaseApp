@@ -1,0 +1,32 @@
+@page "/events/{Id:int}"
+@using EventEaseApp.Models
+@inject EventEaseApp.Services.EventService EventService
+@inject EventEaseApp.Services.RegistrationService RegistrationService
+@inject NavigationManager Nav
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Event? ev;
+    private int registrationsCount;
+    protected override void OnInitialized()
+    {
+        ev = EventService.GetById(Id);
+        registrationsCount = RegistrationService.GetByEventId(Id).Count();
+    }
+
+    private void GoBack() => Nav.NavigateTo("/events");
+}
+
+@if (ev is null)
+{
+    <p>Evento no encontrado.</p>
+}
+else
+{
+    <h3>@ev.Name</h3>
+    <p><strong>Fecha:</strong> @ev.Date.ToString("f")</p>
+    <p><strong>Ubicación:</strong> @ev.Location</p>
+    <p>@ev.Description</p>
+    <p><strong>Registrados:</strong> @registrationsCount</p>
+    <button class="btn btn-secondary" @onclick="GoBack">Volver</button>
+}

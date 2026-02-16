@@ -1,0 +1,52 @@
+@attribute [Authorize]
+@page "/addevent"
+@using EventEaseApp.Models
+@inject EventEaseApp.Services.EventService EventService
+@inject NavigationManager Nav
+
+<h3>Agregar Evento</h3>
+
+<div class="mb-2">
+    <label>Nombre</label>
+    <input @bind="name" class="form-control" />
+</div>
+<div class="mb-2">
+    <label>Fecha</label>
+    <input type="datetime-local" @bind="date" class="form-control" />
+</div>
+<div class="mb-2">
+    <label>Ubicación</label>
+    <input @bind="location" class="form-control" />
+</div>
+<div class="mb-2">
+    <label>Descripción</label>
+    <textarea @bind="description" class="form-control"></textarea>
+</div>
+
+<button class="btn btn-primary" @onclick="SubmitEvent">Guardar</button>
+<button class="btn btn-link" @onclick="Cancel">Cancelar</button>
+
+@code {
+    private string name = string.Empty;
+    private DateTime date = DateTime.Now;
+    private string location = string.Empty;
+    private string description = string.Empty;
+
+    private void SubmitEvent()
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var ev = new Event
+        {
+            Name = name,
+            Date = date,
+            Location = location,
+            Description = description
+        };
+
+        EventService.Add(ev);
+        Nav.NavigateTo("/events");
+    }
+
+    private void Cancel() => Nav.NavigateTo("/events");
+}

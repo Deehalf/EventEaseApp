@@ -1,0 +1,71 @@
+@page "/events"
+@using EventEaseApp.Models
+@using EventEaseApp.Shared
+@inject EventEaseApp.Services.EventService EventService
+@inject EventEaseApp.Services.RegistrationService RegistrationService
+@inject NavigationManager Nav
+
+<h3>Eventos</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <p><button class="btn btn-success" @onclick="GoAdd">Añadir evento</button></p>
+    </Authorized>
+    <NotAuthorized>
+        <p>
+            <button class="btn btn-success" disabled title="Debes iniciar sesión para añadir eventos">Añadir evento</button>
+            <a class="ms-2" href="/login">Inicia sesión</a>
+        </p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@if (!events.Any())
+{
+    <p>No hay eventos.</p>
+}
+else
+{
+    @foreach (var ev in events)
+    {
+        <EventCard @key="ev.Id"
+                   EventItem="@ev"
+                   OnDelete="HandleDelete"
+                   RegistrationCount="@(regCounts.ContainsKey(ev.Id) ? regCounts[ev.Id] : 0)" />
+    }
+}
+
+@code {
+    private List<Event> events = new();
+    private Dictionary<int,int> regCounts = new();
+
+    protected override void OnInitialized()
+    {
+        events = EventService.GetAll().ToList();
+        UpdateRegistrationCounts();
+    }
+
+    private void UpdateRegistrationCounts()
+    {
+        regCounts = events.ToDictionary(e => e.Id, e => RegistrationService.GetByEventId(e.Id).Count());
+    }
+
+    private void GoAdd() => Nav.NavigateTo("/addevent");
+
+    private async Task HandleDelete(int id)
+    {
+        var count = RegistrationService.GetByEventId(id).Count();
+        if (count > 0)
+        {
+            var confirmed = await JS.InvokeAsync<bool>("confirm", $"El evento tiene {count} registro(s). ¿Deseas eliminarlo?");
+            if (!confirmed) return;
+        }
+        if (EventService.Remove(id))
+        {
+            events = EventService.GetAll().ToList();
+            UpdateRegistrationCounts();
+            StateHasChanged();
+        }
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+}

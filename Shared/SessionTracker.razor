@@ -1,0 +1,52 @@
+@inject EventEaseApp.Services.IAuthService AuthService
+@inject NavigationManager Nav
+
+<div class="session-tracker mb-2">
+    @if (currentUser is null)
+    {
+        <div class="d-flex gap-2">
+            <input @bind="userName" placeholder="Usuario" class="form-control form-control-sm" />
+            <input @bind="password" placeholder="Contraseña" type="password" class="form-control form-control-sm" />
+            <button class="btn btn-sm btn-primary" @onclick="LoginAsync">Entrar</button>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="GoRegister">Registrar</button>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex align-items-center gap-2">
+            <small>Conectado: <strong>@currentUser</strong></small>
+            <button class="btn btn-sm btn-outline-primary ms-2" @onclick="LogoutAsync">Salir</button>
+        </div>
+    }
+</div>
+
+@code {
+    private string userName = string.Empty;
+    private string password = string.Empty;
+    private string? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await AuthService.GetCurrentUserAsync();
+    }
+
+    private async Task LoginAsync()
+    {
+        var ok = await AuthService.LoginAsync(userName?.Trim() ?? string.Empty, password ?? string.Empty);
+        if (ok)
+        {
+            currentUser = await AuthService.GetCurrentUserAsync();
+            userName = password = string.Empty;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LogoutAsync()
+    {
+        await AuthService.LogoutAsync();
+        currentUser = null;
+        StateHasChanged();
+    }
+
+    private void GoRegister() => Nav.NavigateTo("/register-user");
+}

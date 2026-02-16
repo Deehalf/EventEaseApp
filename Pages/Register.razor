@@ -1,0 +1,74 @@
+@page "/events/{Id:int}/register"
+@using EventEaseApp.Models
+@inject EventEaseApp.Services.EventService EventService
+@inject EventEaseApp.Services.RegistrationService RegistrationService
+@inject NavigationManager Nav
+
+<h3>Registro al evento</h3>
+
+@if (ev is null)
+{
+    <p>Evento no encontrado.</p>
+}
+else
+{
+    <h5>@ev.Name</h5>
+    <p><strong>Fecha:</strong> @ev.Date.ToString("f")</p>
+
+    <EditForm Model="registrationModel" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Nombre</label>
+            <InputText @bind-Value="registrationModel.Name" class="form-control" />
+            <ValidationMessage For="@(() => registrationModel.Name)" />
+        </div>
+
+        <div class="mb-3">
+            <label>Edad</label>
+            <InputNumber @bind-Value="registrationModel.Age" class="form-control" />
+            <ValidationMessage For="@(() => registrationModel.Age)" />
+        </div>
+
+        <div class="mb-3">
+            <label>Correo</label>
+            <InputText @bind-Value="registrationModel.Email" type="email" class="form-control" />
+            <ValidationMessage For="@(() => registrationModel.Email)" />
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Enviar registro</button>
+            <button type="button" class="btn btn-link" @onclick="Cancel">Cancelar</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert alert-success mt-3">@message</div>
+        }
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Event? ev;
+    private Registration registrationModel = new();
+    private string message = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        ev = EventService.GetById(Id);
+        registrationModel = new Registration { EventId = Id };
+    }
+
+    private void HandleValidSubmit()
+    {
+        registrationModel.EventId = Id;
+        RegistrationService.Add(registrationModel);
+        message = "Registro exitoso.";
+        // opcional: navegar a detalles
+        Nav.NavigateTo($"/events/{Id}");
+    }
+
+    private void Cancel() => Nav.NavigateTo($"/events/{Id}");
+}

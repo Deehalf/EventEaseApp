@@ -1,0 +1,50 @@
+@page "/login"
+@inject EventEaseApp.Services.IAuthService AuthService
+@inject NavigationManager Nav
+
+<h3>Iniciar sesión</h3>
+
+<EditForm Model="model" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-2">
+        <label>Usuario</label>
+        <InputText @bind-Value="model.UserName" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label>Contraseña</label>
+        <InputText @bind-Value="model.Password" type="password" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Entrar</button>
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger mt-2">@error</div>
+    }
+</EditForm>
+
+@code {
+    private LoginModel model = new();
+    private string error = string.Empty;
+
+    private class LoginModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private async Task HandleLogin()
+    {
+        error = string.Empty;
+        var ok = await AuthService.LoginAsync(model.UserName.Trim(), model.Password);
+        if (ok)
+        {
+            Nav.NavigateTo("/");
+        }
+        else
+        {
+            error = "Usuario o contraseña incorrectos.";
+        }
+    }
+}

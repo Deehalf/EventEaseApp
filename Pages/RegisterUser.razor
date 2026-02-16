@@ -1,0 +1,61 @@
+@page "/register-user"
+@inject EventEaseApp.Services.IAuthService AuthService
+@inject NavigationManager Nav
+
+<h3>Registrar nuevo usuario</h3>
+
+<EditForm Model="model" OnValidSubmit="HandleRegister">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-2">
+        <label>Usuario</label>
+        <InputText @bind-Value="model.UserName" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label>Contraseña</label>
+        <InputText @bind-Value="model.Password" type="password" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label>Confirmar contraseña</label>
+        <InputText @bind-Value="model.Confirm" type="password" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Registrar</button>
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert alert-info mt-2">@message</div>
+    }
+</EditForm>
+
+@code {
+    private RegisterModel model = new();
+    private string message = string.Empty;
+
+    private class RegisterModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string Confirm { get; set; } = string.Empty;
+    }
+
+    private async Task HandleRegister()
+    {
+        message = string.Empty;
+        if (model.Password != model.Confirm)
+        {
+            message = "Las contraseñas no coinciden.";
+            return;
+        }
+
+        var ok = await AuthService.RegisterAsync(model.UserName.Trim(), model.Password);
+        if (ok)
+        {
+            Nav.NavigateTo("/");
+        }
+        else
+        {
+            message = "El usuario ya existe o datos inválidos.";
+        }
+    }
+}
